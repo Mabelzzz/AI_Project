@@ -29,3 +29,5 @@ async def process_image(file: UploadFile = File(...)):
 
     # return JSONResponse(content={"results": results_list})
     return {"Recived the images": "True"}
+    
+# uvicorn main:app --host 0.0.0.0 --port 8000
