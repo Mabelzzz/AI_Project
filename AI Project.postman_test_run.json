@@ -1,0 +1,116 @@
+{
+	"id": "34341faf-44fd-44c6-ad35-1ebc7c831258",
+	"name": "AI Project",
+	"timestamp": "2024-09-04T10:11:29.124Z",
+	"collection_id": "21576397-864c326c-45aa-42a0-a7a0-70f50d93ff30",
+	"folder_id": 0,
+	"environment_id": "0",
+	"totalPass": 10,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2024-09-04T10:11:23.495Z",
+	"totalFail": 0,
+	"results": [
+		{
+			"id": "6aff9777-756e-4d81-98d2-25648d865cbe",
+			"name": "/processImageBottle",
+			"url": "http://127.0.0.1:8000/processImageBottle",
+			"time": 444,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Successful POST request": true
+			},
+			"testPassFailCounts": {
+				"Successful POST request": {
+					"pass": 5,
+					"fail": 0
+				}
+			},
+			"times": [
+				628,
+				484,
+				415,
+				491,
+				444
+			],
+			"allTests": [
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				}
+			]
+		},
+		{
+			"id": "040f3ad7-98c9-44dd-8ada-bbb0fa4ba7ba",
+			"name": "/processImageCan",
+			"url": "http://127.0.0.1:8000/processImageCan",
+			"time": 457,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Successful POST request": true
+			},
+			"testPassFailCounts": {
+				"Successful POST request": {
+					"pass": 5,
+					"fail": 0
+				}
+			},
+			"times": [
+				717,
+				468,
+				576,
+				451,
+				457
+			],
+			"allTests": [
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				},
+				{
+					"Successful POST request": true
+				}
+			]
+		}
+	],
+	"count": 5,
+	"totalTime": 5131,
+	"collection": {
+		"requests": [
+			{
+				"id": "6aff9777-756e-4d81-98d2-25648d865cbe",
+				"method": "POST"
+			},
+			{
+				"id": "040f3ad7-98c9-44dd-8ada-bbb0fa4ba7ba",
+				"method": "POST"
+			}
+		]
+	}
+}

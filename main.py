@@ -1,113 +1,133 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from ultralytics import YOLO
 from PIL import Image
 import io
-import torch
-from torchvision import transforms
-import sys
-sys.path.append('/home/pnamwayk/Desktop/AI_Project/yolov10') 
-from yolov10.models.yolov10 import YOLOv10
-# from models.yolov10 import YOLOv10
+import os
+import shutil
 
 app = FastAPI()
 
-# Load the YOLOv10 model
-# model = torch.load("/home/pnamwayk/Desktop/AI_Project/weights/best1_bottle.pt", map_location=torch.device('cpu'))
-# model.eval()
+def run_model(image_path): # Run the model based on the item
+    model_version = 1
+    model = YOLO(f"weights/best{model_version}.pt")
+    results = model(image_path) # Run the model on the image
+    results[0].show() # Show the image with the detections
+    return model, results
 
-# net.load_state_dict(torch.load(PATH))
-# net.eval()
+def check_item(item, items_model):
+    print(f"Item: {item}, Model: {items_model}")
+    if item == "bottle" and items_model == "GreenTech-bottle":
+        return True
+    if item == "can" and items_model == "GreenTech-can":
+        return True
+    return False
 
-# for attr, value in model.items():
-#     print(f"{attr}: {value}")
+def check_detection(results):
+    if len(results[0].boxes) == 0: # No detections found in the image
+        return False
+    return True
 
+def check_image_format(file, image_data, filename):
+    if file.content_type not in ["image/jpeg", "image/png"]: # Check if the image is in the correct format
+        return False
+    return True
 
-# Instantiate the model
-model = YOLOv10()
+def save_image(image_data, path_image): # Save the image on server
+    with open(path_image, "wb") as f:
+        f.write(image_data)
 
-# Load the weights
-checkpoint = torch.load("weights/best1_bottle.pt", map_location=torch.device('cpu'))
-model.load_state_dict(checkpoint['model'])  # Adjust based on the checkpoint dictionary keys
+def move_image(image_data, cur_path, new_path): # Move the image to a new folder
+    shutil.move(cur_path, new_path)
+    print(f"File moved to {new_path}")
 
-# Set the model to evaluation mode
-model.eval()
+def delete_image(path_image): # Delete the image from the server
+    if os.path.exists(path_image):
+        os.remove(path_image)
 
-def process_image(image_data):
-    # Open the image
-    image = Image.open(io.BytesIO(image_data))
-    
-    # Apply transformations as needed (this is a placeholder; customize as needed)
-    transform = transforms.Compose([
-        transforms.Resize((640, 640)),  # Resize to the input size of YOLOv10
-        transforms.ToTensor(),  # Convert the image to a PyTorch tensor
-    ])
-    
-    # Apply the transformations
-    image = transform(image)
-    image = image.unsqueeze(0)  # Add a batch dimension
+def model_process(file, image_data, item):
+    # Check if the image is in the correct format
+    if not check_image_format(file, image_data, file.filename):
+        raise HTTPException(status_code=400, detail={"error": "Invalid image format"})
 
-    return image
+    # Save the image on server
+    path_image = f"images/{item}/valid/{file.filename}"
+    save_image(image_data, path_image)
 
-def run_model_on_image(model, image_tensor):
-    with torch.no_grad():
-        outputs = model(image_tensor)
-    return outputs
+    # Run the model on the image based on the item
+    model, results = run_model(path_image)
 
-@app.post("/processImageCan")
-async def process_image_can(file: UploadFile = File(...)):
-    try:
-        # Read and process the uploaded image
-        image_data = await file.read()
-        image = Image.open(io.BytesIO(image_data))
-
-        # Validate the image format (example: JPEG or PNG)
-        # print(image.format not in ["JPEG", "PNG"])
-        # if image.format not in ["JPEG", "PNG"]:
-        #     raise HTTPException(status_code=400, detail="Invalid image format")
-        
-        # Process the image
-        image_tensor = process_image(image_data)
-        
-        # Run the model on the image
-        outputs = run_model_on_image(model, image_tensor)
-        # outputs.load_state_dict(torch.load("/home/pnamwayk/Desktop/AI_Project/weights/best1_bottle.pt", map_location=torch.device('cpu')))
-        # outputs.eval()
-
-        # Example post-processing (customize according to your model's output)
-        # Here we assume that the model returns a prediction and a confidence score
-        is_valid_can = True  # Placeholder logic; replace with actual logic
-        can_model = "Brand X 330ml"  # Placeholder logic; replace with actual logic
-        confidence = 0.98  # Placeholder logic; replace with actual logic
-
-        return {"isValidCan": is_valid_can, "canModel": can_model, "confidence": confidence}
-    
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=400, detail="Invalid image format")
+    # Check if the image can be classified
+    if not check_detection(results):
+        new_path = f"images/{item}/invalid/{file.filename}" # Invalid folder
+        move_image(image_data, path_image, new_path) # Move the image to invalid folder
+        raise HTTPException(status_code=400, detail={"error": "No detections found"})
+    return model, results
 
 @app.post("/processImageBottle")
 async def process_image_bottle(file: UploadFile = File(...)):
     try:
+        item = "bottle"
+
         # Read and process the uploaded image
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data))
 
-        # Validate the image format (example: JPEG or PNG)
-        if image.format not in ["JPEG", "PNG"]:
-            raise HTTPException(status_code=400, detail="Invalid image format")
-        
-        # Process the image
-        image_tensor = process_image(image_data)
-        
-        # Run the model on the image
-        outputs = run_model_on_image(model, image_tensor)
-        
-        # Example post-processing (customize according to your model's output)
-        # Here we assume that the model returns a prediction and a confidence score
-        is_valid_bottle = True  # Placeholder logic; replace with actual logic
-        bottle_model = "Brand Y 500ml"  # Placeholder logic; replace with actual logic
-        confidence = 0.95  # Placeholder logic; replace with actual logic
+        model, results = model_process(file, image_data, item)
 
-        return {"isValidBottle": is_valid_bottle, "bottleModel": bottle_model, "confidence": confidence}
-    
+        # If the image is valid, classify it
+        if len(results[0].boxes) > 0 and hasattr(results[0], 'boxes'):
+            is_valid_bottle = True
+            confidence = None
+            items_model = None
+            for detection in results[0].boxes:
+                confidence = float(detection.conf.numpy())  # Ensure this is a float
+                cls = int(detection.cls.numpy())  # Ensure this is an integer
+                items_model = model.names.get(cls, "Unknown")  # Safely access class name
+                print(f"Class: {items_model}, Confidence: {confidence}")
+            is_valid_bottle = check_item(item, items_model)
+            if not is_valid_bottle:
+                valid_path = f"images/{item}/valid/{file.filename}"
+                invalid_path = f"images/{item}/invalid/{file.filename}" # Invalid folder
+                move_image(image_data, valid_path, invalid_path) # Move the image to invalid folder
+            return {
+                "isValidBottle": is_valid_bottle,
+                "confidence": confidence
+                }
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid image format")
+        raise HTTPException(status_code=400, detail={"error": f"Invalid image formattt: {str(e)}"})
+
+@app.post("/processImageCan")
+async def process_image_can(file: UploadFile = File(...)):
+    try:
+        item = "can"
+
+        # Read and process the uploaded image
+        image_data = await file.read()
+        image = Image.open(io.BytesIO(image_data))
+
+        model, results = model_process(file, image_data, item)
+
+        # If the image is valid, classify it
+        if len(results[0].boxes) > 0 and hasattr(results[0], 'boxes'):
+            is_valid_can = True
+            confidence = None
+            items_model = None
+            for detection in results[0].boxes:
+                confidence = float(detection.conf.numpy())  # Ensure this is a float
+                cls = int(detection.cls.numpy())  # Ensure this is an integer
+                items_model = model.names.get(cls, "Unknown")  # Safely access class name
+                print(f"Class: {items_model}, Confidence: {confidence}")
+            is_valid_can = check_item(item, items_model)
+            print(f"Valid: {is_valid_can}")
+            if not is_valid_can:
+                valid_path = f"images/{item}/valid/{file.filename}"
+                invalid_path = f"images/{item}/invalid/{file.filename}" # Invalid folder
+                move_image(image_data, valid_path, invalid_path) # Move the image to invalid folder
+            return {
+                "isValidCan": is_valid_can,
+                "confidence": confidence
+                }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail={"error": f"Invalid image formattt: {str(e)}"})
+
+# uvicorn main:app --reload --port 8000
