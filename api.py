@@ -22,16 +22,13 @@ can_points = {"325 ml": 50, "500 ml": 100}
 class PhoneNumberRequest(BaseModel):
     phoneNumber: str
 
-
 class BottleDeposit(BaseModel):
     bottleSize: str
     quantity: int
 
-
 class CanDeposit(BaseModel):
     canSize: str
     quantity: int
-
 
 class AccumulatePointsRequest(BaseModel):
     phoneNumber: str
