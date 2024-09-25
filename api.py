@@ -18,7 +18,6 @@ users = [
 bottle_points = {"325 ml": 50, "500 ml": 100}
 can_points = {"325 ml": 50, "500 ml": 100}
 
-
 # Models for input validation
 class PhoneNumberRequest(BaseModel):
     phoneNumber: str
@@ -39,6 +38,14 @@ class AccumulatePointsRequest(BaseModel):
     serialNumber: str
     earnedPoints: int
 
+class DonateRequest(BaseModel):
+    phoneNumber: str
+
+class ActivateRequest(BaseModel):
+    serialNumber: str
+
+class HeartbeatRequest(BaseModel):
+    serialNumber: str
 
 # 1. POST /getProfile
 @app.post("/getProfile")
@@ -61,7 +68,6 @@ async def get_profile(request: PhoneNumberRequest):
             "totalPoint": "totalPoint"
         }
 
-
 # 2. POST /calculatedBottlePoints
 @app.post("/calculatedBottlePoints")
 async def calculate_bottle_points(jsonObj: list[BottleDeposit]):
@@ -80,7 +86,6 @@ async def calculate_bottle_points(jsonObj: list[BottleDeposit]):
         "totalBottles": total_bottles
     }
 
-
 # 3. POST /calculatedCanPoints
 @app.post("/calculatedCanPoints")
 async def calculate_can_points(jsonObj: list[CanDeposit]):
@@ -98,7 +103,6 @@ async def calculate_can_points(jsonObj: list[CanDeposit]):
         "earnedPoints": total_points,
         "totalCans": total_cans
     }
-
 
 # 4. POST /accumulatePoints
 @app.post("/accumulatePoints")
@@ -121,6 +125,63 @@ async def accumulate_points(request: AccumulatePointsRequest):
         "totalPoints": "totalPoint"
     }
 
+# 5. POST /donate
+@app.post("/donate")
+async def donate(data: DonateRequest):
+    phone_number = data.phoneNumber
+
+    # ตรวจสอบความถูกต้องของหมายเลขโทรศัพท์ (ตัวอย่างเช่น ตรวจสอบรูปแบบ)
+    # if len(phone_number) != 10 or not phone_number.isdigit():
+    #     raise HTTPException(status_code=400, detail="Invalid phone number")
+
+    # try:
+        # บันทึกข้อมูลการบริจาคไปยังฐานข้อมูล (เช่น Strapi)
+        # ตัวอย่างการบันทึกข้อมูล
+        # save_donation(phone_number)
+
+    return {"message": "Donation data saved successfully"}
+
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail="Internal server error")
+
+# 6. POST /activate
+async def activate(data: ActivateRequest):
+    serial_number = data.serialNumber
+
+    # try:
+        # ตรวจสอบสถานะของเครื่อง RVM (เช่น ดูจากฐานข้อมูล)
+        # rvm_status = check_rvm_status(serial_number)
+
+        # ตัวอย่าง: ถ้าเครื่องถูก Activate แล้ว
+        # rvm_status = "activated"  # สมมุติว่าเป็นค่าเบื้องต้น
+
+        # if rvm_status == "activated":
+    return {"serialNumber": serial_number, "status": "activated"}
+    #     else:
+    #         raise HTTPException(status_code=404, detail="RVM not found")
+
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail="Internal server error")
+
+# 7. POST /heartbeat
+@app.post("/heartbeat")
+async def heartbeat(data: HeartbeatRequest):
+    serial_number = data.serialNumber
+
+    # try:
+        # ตรวจสอบสถานะออนไลน์ของเครื่อง RVM (เช่น ดูจากฐานข้อมูล)
+        # rvm_status = check_rvm_online_status(serial_number)
+
+        # ตัวอย่าง: ถ้าเครื่องออนไลน์
+        # rvm_status = "online"  # สมมุติว่าเป็นค่าเบื้องต้น
+
+        # if rvm_status == "online":
+    return {"serialNumber": serial_number, "status": "online"}
+    #     else:
+    #         raise HTTPException(status_code=404, detail="RVM not found")
+
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail="Internal server error")
 
 # Error handling for unexpected server issues
 @app.exception_handler(500)
