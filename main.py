@@ -51,11 +51,12 @@ def model_process(file, image_data, item):
 
     # Save the image on server
     path_image = f"images/{item}/valid/{file.filename}"
+    print(f"Image path: {path_image}")
     save_image(image_data, path_image)
 
     # Run the model on the image based on the item
     model, results = run_model(path_image)
-
+    print(f"Results: {results}")
     # Check if the image can be classified
     if not check_detection(results):
         new_path = f"images/{item}/invalid/{file.filename}" # Invalid folder
@@ -130,4 +131,11 @@ async def process_image_can(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail={"error": f"Invalid image formattt: {str(e)}"})
 
+# Start the server using Uvicorn
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+# How to run if have no __main__
 # uvicorn main:app --reload --port 8000
